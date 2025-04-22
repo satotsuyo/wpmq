@@ -134,7 +134,11 @@ if 'questions' not in st.session_state:
 # ------------------------------
 # タイトルと説明
 # ------------------------------
-st.markdown("<h1 style='text-align: center;'>CompRateWPM（Comprehension × WPM）</h1>", unsafe_allow_html=True)
+st.markdown("""
+    <h1 style='text-align: center; font-size: 3.0em;'>
+        CompRateWPM <br>（Comprehension × WPM）
+    </h1>
+""", unsafe_allow_html=True)
 
 st.markdown(""" 
 **使い方**
