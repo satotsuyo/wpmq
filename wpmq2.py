@@ -140,7 +140,3 @@ if st.session_state.finished and st.session_state.input_text and st.session_stat
         for i, q in enumerate(st.session_state.questions):
             result = "✅" if user_answers[i] == q['correct_answer'] else "❌"
             st.write(f"{result} Q{i+1}: {q['question']}（正解: {q['correct_answer']} / あなたの解答: {user_answers[i]}）")
-
-        st.subheader("正解一覧")
-        for i, q in enumerate(st.session_state.questions):
-            st.write(f"Q{i+1}: {q['question']} → 正解: {q['correct_answer']}")
