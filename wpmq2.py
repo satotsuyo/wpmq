@@ -3,6 +3,58 @@ import time
 import random
 import re
 
+# 形容詞とその反意語のペア
+adjective_antonyms = {
+    "good": "bad",
+    "many": "few",
+    "big": "small",
+    "happy": "sad",
+    "easy": "hard",
+    "fast": "slow",
+    "hot": "cold",
+    "strong": "weak",
+    "rich": "poor",
+    "bright": "dark",
+    "young": "old",
+    "clean": "dirty",
+    "safe": "dangerous",
+    "short": "long",
+    "strong": "weak",
+    "near": "far",
+    "expensive": "cheap",
+    "hard": "soft",
+    "heavy": "light",
+    "new": "old",
+    "smart": "stupid",
+    "tall": "short",
+    "long": "short",
+    "beautiful": "ugly",
+    "rich": "poor",
+    "quiet": "noisy",
+    "slow": "fast",
+    "weak": "strong",
+    "funny": "serious",
+    "clean": "dirty",
+    "interesting": "boring",
+    "bright": "dim",
+    "friendly": "unfriendly",
+    "polite": "impolite",
+    "brave": "cowardly",
+    "thin": "fat",
+    "active": "lazy",
+    "fresh": "stale",
+    "modern": "ancient",
+    "healthy": "unhealthy",
+    "soft": "hard",
+    "warm": "cold",
+    "quiet": "loud",
+    "sharp": "blunt",
+    "rich": "poor",
+    "peaceful": "violent",
+    "beautiful": "ugly",
+    "quiet": "loud",
+}
+
 # ------------------------------
 # 文の修正関数（False文生成）
 # ------------------------------
@@ -11,7 +63,7 @@ def modify_sentence(sentence, make_false=False):
         return sentence
 
     # False文生成の方法をランダムに選択
-    method = random.choice(['negation', 'number_change'])
+    method = random.choice(['negation', 'number_change', 'adjective_antonym'])
 
     if method == 'negation':
         patterns = [
@@ -31,6 +83,14 @@ def modify_sentence(sentence, make_false=False):
             num_to_replace = random.choice(number_matches)
             new_num = str(int(num_to_replace) + random.choice([1, 2, 3, 5, 10]))
             return sentence.replace(num_to_replace, new_num, 1)
+
+    elif method == 'adjective_antonym':
+        # 形容詞の反意語に置き換える
+        words = sentence.split()
+        for i, word in enumerate(words):
+            if word in adjective_antonyms:
+                words[i] = adjective_antonyms[word]
+        return ' '.join(words)
 
     return sentence  # 変更できなければ元の文を返す
 
@@ -76,7 +136,7 @@ if 'questions' not in st.session_state:
 # ------------------------------
 st.markdown("<h1 style='text-align: center;'>CompRateWPM（Comprehension × WPM）</h1>", unsafe_allow_html=True)
 
-st.markdown("""
+st.markdown(""" 
 **使い方**
 - 読む英文を入力してください。
 - 「リーディング開始」ボタンを押すと時間が計測されます。
@@ -126,8 +186,6 @@ if st.session_state.finished and st.session_state.input_text and st.session_stat
 
     if st.session_state.questions is None:
         st.session_state.questions = generate_comprehension_questions(st.session_state.input_text)
-
-    # ...（前略）...
 
     st.subheader("内容理解問題")
 
