@@ -67,10 +67,25 @@ if 'questions' not in st.session_state:
     st.session_state.questions = None
 
 # ------------------------------
-# タイトル表示
+# タイトル表示（フォントサイズ拡大）
 # ------------------------------
 st.markdown("""
-    <h1 style='text-align: center;'>CompRateWPM（Comprehension × WPM）</h1>
+    <h1 style='text-align: center; font-size: 2.0em;'>
+        CompRateWPM <br>（Comprehension × WPM）
+    </h1>
+""", unsafe_allow_html=True)
+
+# ------------------------------
+# 使い方の説明（タイトルのみ太字）
+# ------------------------------
+st.markdown("""
+**使い方**
+- 読む英文を入力してください。
+- 「リーディング開始」ボタンを押すと、時間の計測が始まります。
+- 読み終えたら、「内容理解テストに進む」ボタンを押してください。
+  - 読んだ英文に関する〇×問題（4問）が出題されます。
+- テストを終えて「スコアを表示」ボタンを押すと、
+  - WPM（1分あたりの語数）に正答率をかけたスコアが表示されます。
 """, unsafe_allow_html=True)
 
 # ------------------------------
@@ -80,37 +95,17 @@ with st.container():
     col1, col2 = st.columns([4, 1])
 
     with col1:
-        if not st.session_state.finished:
-            st.session_state.input_text = st.text_area("読む英文を入力してください", height=400)
-        else:
-            st.write("パッセージは非表示です。")
+        st.session_state.input_text = st.text_area("読む英文を入力してください", height=400)
 
     with col2:
-        if st.session_state.input_text:
-            cleaned_text = (st.session_state.input_text
-                            .replace(":", "").replace(";", "").replace(",", "")
-                            .replace(".", "").replace('"', "").replace("'", ""))
-            words = cleaned_text.split()
-            total_words = len(words)
+        st.button("リーディング開始", key="start")  # 最初からボタンを表示
 
-            st.markdown(f"総語数: <b style='font-size: 1.5em;'>{total_words}</b>", unsafe_allow_html=True)
-
-            if st.button("リーディング開始", key="start") and st.session_state.start_time is None:
-                st.write("読み始めます。読み終わったら右側の「読み終えたので内容理解問題を解く」ボタンを押してください。")
+        if st.session_state.start_time is None:
+            if st.session_state.input_text:
+                st.write("読み始めます。読み終わったら右側の「内容理解テストに進む」ボタンを押してください。")
                 st.session_state.start_time = time.time()
-
-            if st.session_state.start_time is not None:
-                if st.button("読み終えたので内容理解問題を解く", key="finish"):
-                    end_time = time.time()
-                    reading_time_minutes = (end_time - st.session_state.start_time) / 60
-                    if reading_time_minutes == 0:
-                        st.write("計測時間が0分です。再度お試しください。")
-                    else:
-                        st.session_state.wpm = total_words / reading_time_minutes
-                        st.markdown(f"読了時間: <b style='font-size: 1.5em;'>{round(reading_time_minutes, 2)}</b> 分", unsafe_allow_html=True)
-                        st.markdown(f"WPM: <b style='font-size: 1.5em;'>{round(st.session_state.wpm, 2)}</b>", unsafe_allow_html=True)
-                        st.session_state.finished = True
-                        st.write("読了しました。以下に内容理解問題を提示します。")
+            else:
+                st.write("英文を入力してください。")  # 入力前に押した場合のメッセージ
 
 # ------------------------------
 # 内容理解問題とスコア表示
@@ -127,7 +122,7 @@ if st.session_state.finished and st.session_state.input_text and st.session_stat
         ans = st.radio(f"Q{idx+1} の解答", ("True", "False"), key=f"q{idx}")
         user_answers.append(ans)
 
-    if st.button("解答を送信してスコアを表示"):
+    if st.button("スコアを表示"):
         correct_count = sum(1 for idx, q in enumerate(st.session_state.questions) if user_answers[idx] == q['correct_answer'])
         accuracy = correct_count / 4
         final_score = st.session_state.wpm * accuracy
