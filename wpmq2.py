@@ -106,13 +106,9 @@ def generate_comprehension_questions(text, num=4):
 
     questions = []
     for sentence in selected_sentences:
-        # TrueとFalseの割合をランダムに設定（50%）
-        correct_answer = random.choice(["True", "False"])
-
-        if correct_answer == "False":
-            question_statement = modify_sentence(sentence, make_false=True)
-        else:
-            question_statement = sentence
+        make_false = any(word in sentence for word in [" is", " are", " was", " were", " can", " should", " will", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"])
+        question_statement = modify_sentence(sentence, make_false)
+        correct_answer = "False" if question_statement != sentence else "True"
 
         questions.append({
             "question": question_statement,
