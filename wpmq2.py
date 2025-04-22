@@ -70,7 +70,7 @@ if 'questions' not in st.session_state:
 # タイトル表示（フォントサイズ拡大）
 # ------------------------------
 st.markdown("""
-    <h1 style='text-align: center; font-size: 2.0em;'>
+    <h1 style='text-align: center; font-size: 4.0em;'>
         CompRateWPM <br>（Comprehension × WPM）
     </h1>
 """, unsafe_allow_html=True)
