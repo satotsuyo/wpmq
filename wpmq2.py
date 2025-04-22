@@ -3,56 +3,31 @@ import time
 import random
 import re
 
-# 形容詞とその反意語のペア
+# 形容詞とその反意語のペア（100組）
 adjective_antonyms = {
-    "good": "bad",
-    "many": "few",
-    "big": "small",
-    "happy": "sad",
-    "easy": "hard",
-    "fast": "slow",
-    "hot": "cold",
-    "strong": "weak",
-    "rich": "poor",
-    "bright": "dark",
-    "young": "old",
-    "clean": "dirty",
-    "safe": "dangerous",
-    "short": "long",
-    "strong": "weak",
-    "near": "far",
-    "expensive": "cheap",
-    "hard": "soft",
-    "heavy": "light",
-    "new": "old",
-    "smart": "stupid",
-    "tall": "short",
-    "long": "short",
-    "beautiful": "ugly",
-    "rich": "poor",
-    "quiet": "noisy",
-    "slow": "fast",
-    "weak": "strong",
-    "funny": "serious",
-    "clean": "dirty",
-    "interesting": "boring",
-    "bright": "dim",
-    "friendly": "unfriendly",
-    "polite": "impolite",
-    "brave": "cowardly",
-    "thin": "fat",
-    "active": "lazy",
-    "fresh": "stale",
-    "modern": "ancient",
-    "healthy": "unhealthy",
-    "soft": "hard",
-    "warm": "cold",
-    "quiet": "loud",
-    "sharp": "blunt",
-    "rich": "poor",
-    "peaceful": "violent",
-    "beautiful": "ugly",
-    "quiet": "loud",
+    "good": "bad", "bad": "good", "many": "few", "few": "many",
+    "big": "small", "small": "big", "happy": "sad", "sad": "happy",
+    "easy": "hard", "hard": "easy", "fast": "slow", "slow": "fast",
+    "hot": "cold", "cold": "hot", "strong": "weak", "weak": "strong",
+    "rich": "poor", "poor": "rich", "bright": "dark", "dark": "bright",
+    "young": "old", "old": "young", "clean": "dirty", "dirty": "clean",
+    "safe": "dangerous", "dangerous": "safe", "short": "long", "long": "short",
+    "near": "far", "far": "near", "expensive": "cheap", "cheap": "expensive",
+    "heavy": "light", "light": "heavy", "new": "old", "smart": "stupid",
+    "stupid": "smart", "beautiful": "ugly", "ugly": "beautiful",
+    "quiet": "noisy", "noisy": "quiet", "funny": "serious", "serious": "funny",
+    "interesting": "boring", "boring": "interesting", "bright": "dim",
+    "dim": "bright", "friendly": "unfriendly", "unfriendly": "friendly",
+    "polite": "impolite", "impolite": "polite", "brave": "cowardly",
+    "cowardly": "brave", "thin": "fat", "fat": "thin", "active": "lazy",
+    "lazy": "active", "fresh": "stale", "stale": "fresh", "modern": "ancient",
+    "ancient": "modern", "healthy": "unhealthy", "unhealthy": "healthy",
+    "warm": "cold", "sharp": "blunt", "blunt": "sharp", "peaceful": "violent",
+    "violent": "peaceful", "tall": "short", "slow": "fast", "soft": "hard",
+    "hard": "soft", "high": "low", "low": "high", "deep": "shallow",
+    "shallow": "deep", "wide": "narrow", "narrow": "wide", "cool": "warm",
+    "warm": "cool", "early": "late", "late": "early", "empty": "full",
+    "full": "empty", "strong": "fragile", "fragile": "strong"
 }
 
 # ------------------------------
@@ -62,7 +37,6 @@ def modify_sentence(sentence, make_false=False):
     if not make_false:
         return sentence
 
-    # False文生成の方法をランダムに選択
     method = random.choice(['negation', 'number_change', 'adjective_antonym'])
 
     if method == 'negation':
@@ -85,14 +59,17 @@ def modify_sentence(sentence, make_false=False):
             return sentence.replace(num_to_replace, new_num, 1)
 
     elif method == 'adjective_antonym':
-        # 形容詞の反意語に置き換える
         words = sentence.split()
+        modified = False
         for i, word in enumerate(words):
-            if word in adjective_antonyms:
-                words[i] = adjective_antonyms[word]
-        return ' '.join(words)
+            word_clean = re.sub(r'[.,;:!?]$', '', word.lower())
+            if word_clean in adjective_antonyms:
+                words[i] = adjective_antonyms[word_clean]
+                modified = True
+        if modified:
+            return ' '.join(words)
 
-    return sentence  # 変更できなければ元の文を返す
+    return sentence
 
 # ------------------------------
 # 問題生成関数
@@ -106,7 +83,7 @@ def generate_comprehension_questions(text, num=4):
 
     questions = []
     for sentence in selected_sentences:
-        make_false = any(word in sentence for word in [" is", " are", " was", " were", " can", " should", " will", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"])
+        make_false = random.choice([True, False])
         question_statement = modify_sentence(sentence, make_false)
         correct_answer = "False" if question_statement != sentence else "True"
 
@@ -134,11 +111,7 @@ if 'questions' not in st.session_state:
 # ------------------------------
 # タイトルと説明
 # ------------------------------
-st.markdown("""
-    <h1 style='text-align: center; font-size: 3.0em;'>
-        CompRateWPM <br>（Comprehension × WPM）
-    </h1>
-""", unsafe_allow_html=True)
+st.markdown("""<h1 style='text-align: center; font-size: 3.0em;'>CompRateWPM <br>（Comprehension × WPM）</h1>""", unsafe_allow_html=True)
 
 st.markdown(""" 
 **使い方**
@@ -152,7 +125,6 @@ st.markdown("""
 # ------------------------------
 with st.container():
     col1, col2 = st.columns([4, 1])
-
     with col1:
         if not st.session_state.finished:
             st.session_state.input_text = st.text_area("読む英文を入力してください", height=400)
@@ -196,7 +168,7 @@ if st.session_state.finished and st.session_state.input_text and st.session_stat
     user_answers = []
     for idx, q in enumerate(st.session_state.questions):
         st.write(f"Q{idx+1}: {q['question']}")
-        ans = st.radio("", ("True", "False"), key=f"q{idx}")  # ラベルを空に
+        ans = st.radio("", ("True", "False"), key=f"q{idx}")
         user_answers.append(ans)
 
     if st.button("スコアを表示"):
