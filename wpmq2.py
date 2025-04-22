@@ -112,7 +112,7 @@ st.markdown("""
 **使い方**
 - 読む英文を入力してください。
 - 「リーディング開始」ボタンを押すと時間が計測されます。
-- 読み終えたら「内容理解テストに進む」ボタンで〇×問題に進めます。
+- 読み終えたら「内容理解テストに進む」ボタンでTure or False問題に進めます。
 """)
 
 # ------------------------------
@@ -165,6 +165,7 @@ if st.session_state.finished and st.session_state.input_text and st.session_stat
         st.write(f"Q{idx+1}: {q['question']}")
         ans = st.radio("", ("True", "False"), key=f"q{idx}")
         user_answers.append(ans)
+        st.write("")  # 問題文とボタンの間に余白を入れないように、追加スペースを削除
 
     if st.button("スコアを表示"):
         correct = sum(1 for i, q in enumerate(st.session_state.questions) if user_answers[i] == q['correct_answer'])
