@@ -67,11 +67,26 @@ if 'questions' not in st.session_state:
     st.session_state.questions = None
 
 # ------------------------------
-# タイトル表示
+# タイトル表示（改行・サイズ調整）
 # ------------------------------
 st.markdown("""
-    <h1 style='text-align: center;'>CompRateWPM（Comprehension × WPM）</h1>
+    <h1 style='text-align: center; font-size: 1.8em;'>
+        CompRateWPM <br>（Comprehension × WPM）
+    </h1>
 """, unsafe_allow_html=True)
+
+# ------------------------------
+# 使い方の説明を追加
+# ------------------------------
+st.markdown("""
+### 使い方
+- 読む英文を入力してください。
+- 「リーディング開始」ボタンを押すと、時間の計測が始まります。
+- 読み終えたら、「内容理解テストに進む」ボタンを押してください。
+  - 読んだ英文に関する〇×問題（4問）が出題されます。
+- テストを終えて「スコアを表示」ボタンを押すと、
+  - WPM（1分あたりの語数）に正答率をかけたスコアが表示されます。
+""")
 
 # ------------------------------
 # 「読書フェーズ」コンテナ
@@ -96,11 +111,11 @@ with st.container():
             st.markdown(f"総語数: <b style='font-size: 1.5em;'>{total_words}</b>", unsafe_allow_html=True)
 
             if st.button("リーディング開始", key="start") and st.session_state.start_time is None:
-                st.write("読み始めます。読み終わったら右側の「読み終えたので内容理解問題を解く」ボタンを押してください。")
+                st.write("読み始めます。読み終わったら右側の「内容理解テストに進む」ボタンを押してください。")
                 st.session_state.start_time = time.time()
 
             if st.session_state.start_time is not None:
-                if st.button("読み終えたので内容理解問題を解く", key="finish"):
+                if st.button("内容理解テストに進む", key="finish"):
                     end_time = time.time()
                     reading_time_minutes = (end_time - st.session_state.start_time) / 60
                     if reading_time_minutes == 0:
@@ -127,7 +142,7 @@ if st.session_state.finished and st.session_state.input_text and st.session_stat
         ans = st.radio(f"Q{idx+1} の解答", ("True", "False"), key=f"q{idx}")
         user_answers.append(ans)
 
-    if st.button("解答を送信してスコアを表示"):
+    if st.button("スコアを表示"):
         correct_count = sum(1 for idx, q in enumerate(st.session_state.questions) if user_answers[idx] == q['correct_answer'])
         accuracy = correct_count / 4
         final_score = st.session_state.wpm * accuracy
