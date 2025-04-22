@@ -37,37 +37,32 @@ def modify_sentence(sentence, make_false=False):
     if not make_false:
         return sentence
 
-    method = random.choice(['negation', 'number_change', 'adjective_antonym'])
+    # 最初に見つけた形容詞を反意語に変更
+    words = sentence.split()
+    for i, word in enumerate(words):
+        word_clean = re.sub(r'[.,;:!?]$', '', word.lower())
+        if word_clean in adjective_antonyms:
+            words[i] = adjective_antonyms[word_clean]
+            return ' '.join(words)  # 反意語に変更した文を返す
 
-    if method == 'negation':
-        patterns = [
-            (r'\b(is|are|was|were|can|should|will)\b', r'\1 not'),
-            (r'\bThere(is|are)\b', r'There \1 not'),
-            (r'\bIt(is)\b', r'It \1 not'),
-            (r'\bThat(is)\b', r'That \1 not')
-        ]
-        for pattern, replacement in patterns:
-            new_sentence = re.sub(pattern, replacement, sentence)
-            if new_sentence != sentence:
-                return new_sentence
+    # 数値変更
+    number_matches = re.findall(r'\d+', sentence)
+    if number_matches:
+        num_to_replace = random.choice(number_matches)
+        new_num = str(int(num_to_replace) + random.choice([1, 2, 3, 5, 10]))
+        return sentence.replace(num_to_replace, new_num, 1)
 
-    elif method == 'number_change':
-        number_matches = re.findall(r'\d+', sentence)
-        if number_matches:
-            num_to_replace = random.choice(number_matches)
-            new_num = str(int(num_to_replace) + random.choice([1, 2, 3, 5, 10]))
-            return sentence.replace(num_to_replace, new_num, 1)
-
-    elif method == 'adjective_antonym':
-        words = sentence.split()
-        modified = False
-        for i, word in enumerate(words):
-            word_clean = re.sub(r'[.,;:!?]$', '', word.lower())
-            if word_clean in adjective_antonyms:
-                words[i] = adjective_antonyms[word_clean]
-                modified = True
-        if modified:
-            return ' '.join(words)
+    # 否定形追加
+    negation_patterns = [
+        (r'\b(is|are|was|were|can|should|will)\b', r'\1 not'),
+        (r'\bThere(is|are)\b', r'There \1 not'),
+        (r'\bIt(is)\b', r'It \1 not'),
+        (r'\bThat(is)\b', r'That \1 not')
+    ]
+    for pattern, replacement in negation_patterns:
+        new_sentence = re.sub(pattern, replacement, sentence)
+        if new_sentence != sentence:
+            return new_sentence
 
     return sentence
 
