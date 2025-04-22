@@ -1,13 +1,14 @@
 import streamlit as st
 import time
 import random
+import re
 
 # ------------------------------
 # 問題生成用の関数群
 # ------------------------------
 def modify_sentence(sentence, make_false=False):
     """
-    文章の意味を確実に反転させるために "not" を適切に挿入する。
+    文の意味を反転させるために "not" を適切に挿入する
     """
     if make_false:
         markers = [" is ", " are ", " was ", " were ", " can ", " should ", " will "]
@@ -15,16 +16,17 @@ def modify_sentence(sentence, make_false=False):
             if marker in sentence:
                 parts = sentence.split(marker)
                 if len(parts) > 1:
-                    return parts[0] + marker + "not " + parts[1]
-        return sentence  # 不要な "not added" 表示を削除
+                    return parts[0] + marker.strip() + " not " + parts[1]
+        return sentence  # 変更できない場合はそのまま返す
     else:
-        return sentence
+        return sentence  # True文（変更しない）
 
 def generate_comprehension_questions(text, num=4):
     """
-    重複を避け、確実に True/False の問題を作成する
+    True/False形式の読解問題を生成（Falseは意味を反転）
     """
-    sentences = [s.strip() for s in text.split('.') if s.strip()]
+    # 正規表現でピリオド区切り
+    sentences = [s.strip() for s in re.split(r'\.\s*', text) if s.strip()]
     if not sentences:
         sentences = [text]
 
@@ -32,17 +34,16 @@ def generate_comprehension_questions(text, num=4):
 
     questions = []
     for sentence in selected_sentences:
-        # Falseを作る場合、確実に変更できるかチェック
         if any(marker in sentence for marker in [" is ", " are ", " was ", " were ", " can ", " should ", " will "]):
             make_false = True
         else:
-            make_false = False  # 文が変更できない場合はTrueのままにする
+            make_false = False
 
         if make_false:
             question_statement = modify_sentence(sentence, make_false=True)
             correct_answer = "False"
         else:
-            question_statement = sentence
+            question_statement = modify_sentence(sentence, make_false=False)
             correct_answer = "True"
 
         questions.append({
@@ -66,14 +67,14 @@ if 'wpm' not in st.session_state:
 if 'questions' not in st.session_state:
     st.session_state.questions = None
 
-# タイトル表示（フォントサイズ拡大）
+# タイトル表示
 st.markdown("""
     <h1 style='text-align: center; font-size: 3.0em;'>
         CompRateWPM <br>（Comprehension × WPM）
     </h1>
 """, unsafe_allow_html=True)
 
-# 使い方の説明（タイトルのみ太字、箇条書きのフォントサイズ統一）
+# 使い方の説明
 st.markdown("""
 **使い方**
 - 読む英文を入力してください。
@@ -85,7 +86,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ------------------------------
-# 「読書フェーズ」コンテナ
+# 読書フェーズ
 # ------------------------------
 with st.container():
     col1, col2 = st.columns([4, 1])
@@ -97,25 +98,28 @@ with st.container():
             st.write("パッセージは非表示です。")
 
     with col2:
+        # 「リーディング開始」ボタンは常に表示
+        if st.button("リーディング開始", key="start") and st.session_state.start_time is None:
+            if st.session_state.input_text.strip():
+                st.write("読み始めます。読み終えたら「内容理解テストに進む」を押してください。")
+                st.session_state.start_time = time.time()
+            else:
+                st.warning("まず英文を入力してください。")
+
         if st.session_state.input_text:
-            cleaned_text = (st.session_state.input_text
-                            .replace(":", "").replace(";", "").replace(",", "")
-                            .replace(".", "").replace('"', "").replace("'", ""))
+            cleaned_text = re.sub(r'[,:;"\'.]', '', st.session_state.input_text)
             words = cleaned_text.split()
             total_words = len(words)
 
             st.markdown(f"総語数: <b style='font-size: 1.5em;'>{total_words}</b>", unsafe_allow_html=True)
 
-            if st.button("リーディング開始", key="start") and st.session_state.start_time is None:
-                st.write("読み始めます。読み終わったら右側の「内容理解テストに進む」ボタンを押してください。")
-                st.session_state.start_time = time.time()
-
             if st.session_state.start_time is not None:
                 if st.button("内容理解テストに進む", key="finish"):
                     end_time = time.time()
                     reading_time_minutes = (end_time - st.session_state.start_time) / 60
-                    if reading_time_minutes == 0:
-                        st.write("計測時間が0分です。再度お試しください。")
+
+                    if reading_time_minutes < 0.05:
+                        st.warning("読了時間が短すぎます。再度お試しください。")
                     else:
                         st.session_state.wpm = total_words / reading_time_minutes
                         st.markdown(f"読了時間: <b style='font-size: 1.5em;'>{round(reading_time_minutes, 2)}</b> 分", unsafe_allow_html=True)
@@ -124,7 +128,7 @@ with st.container():
                         st.write("読了しました。以下に内容理解問題を提示します。")
 
 # ------------------------------
-# 内容理解問題とスコア表示
+# 問題＆スコア表示
 # ------------------------------
 if st.session_state.finished and st.session_state.input_text and st.session_state.wpm is not None:
     st.write("以下の内容理解問題にお答えください。（True/False を選択）")
@@ -140,13 +144,13 @@ if st.session_state.finished and st.session_state.input_text and st.session_stat
 
     if st.button("スコアを表示"):
         correct_count = sum(1 for idx, q in enumerate(st.session_state.questions) if user_answers[idx] == q['correct_answer'])
-        accuracy = correct_count / 4
+        accuracy = correct_count / len(st.session_state.questions)
         final_score = st.session_state.wpm * accuracy
 
         st.markdown(f"正答率: <b style='font-size: 1.5em;'>{accuracy * 100:.2f}%</b>", unsafe_allow_html=True)
         st.markdown(f"最終スコア（WPM × 正答率）: <b style='font-size: 1.5em;'>{final_score:.2f}</b>", unsafe_allow_html=True)
 
-        # 各問題の正解を表示
+        # 正答表示
         st.markdown("---")
         st.subheader("各問題の正解")
         for idx, q in enumerate(st.session_state.questions):
