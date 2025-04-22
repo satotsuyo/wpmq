@@ -10,20 +10,29 @@ def modify_sentence(sentence, make_false=False):
     if not make_false:
         return sentence
 
-    # be動詞などにnotを入れる（正規表現で対応）
-    patterns = [
-        (r'\b(is|are|was|were|can|should|will)\b', r'\1 not'),
-        (r'\bThere(is|are)\b', r'There \1 not'),  # 直結している場合にも対応
-        (r'\bIt(is)\b', r'It \1 not'),
-        (r'\bThat(is)\b', r'That \1 not')
-    ]
+    # False文生成の方法をランダムに選択
+    method = random.choice(['negation', 'number_change'])
 
-    for pattern, replacement in patterns:
-        new_sentence = re.sub(pattern, replacement, sentence)
-        if new_sentence != sentence:
-            return new_sentence
+    if method == 'negation':
+        patterns = [
+            (r'\b(is|are|was|were|can|should|will)\b', r'\1 not'),
+            (r'\bThere(is|are)\b', r'There \1 not'),
+            (r'\bIt(is)\b', r'It \1 not'),
+            (r'\bThat(is)\b', r'That \1 not')
+        ]
+        for pattern, replacement in patterns:
+            new_sentence = re.sub(pattern, replacement, sentence)
+            if new_sentence != sentence:
+                return new_sentence
 
-    return sentence  # 該当がなければ元の文を返す
+    elif method == 'number_change':
+        number_matches = re.findall(r'\d+', sentence)
+        if number_matches:
+            num_to_replace = random.choice(number_matches)
+            new_num = str(int(num_to_replace) + random.choice([1, 2, 3, 5, 10]))
+            return sentence.replace(num_to_replace, new_num, 1)
+
+    return sentence  # 変更できなければ元の文を返す
 
 # ------------------------------
 # 問題生成関数
@@ -37,9 +46,9 @@ def generate_comprehension_questions(text, num=4):
 
     questions = []
     for sentence in selected_sentences:
-        make_false = any(word in sentence for word in [" is", " are", " was", " were", " can", " should", " will"])
+        make_false = any(word in sentence for word in [" is", " are", " was", " were", " can", " should", " will", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"])
         question_statement = modify_sentence(sentence, make_false)
-        correct_answer = "False" if make_false else "True"
+        correct_answer = "False" if question_statement != sentence else "True"
 
         questions.append({
             "question": question_statement,
@@ -108,12 +117,13 @@ with st.container():
                     else:
                         st.session_state.wpm = total_words / reading_time_minutes
                         st.session_state.finished = True
-                        st.markdown(f"WPM: <b>{round(st.session_state.wpm, 2)}</b>", unsafe_allow_html=True)
 
 # ------------------------------
-# 問題とスコア
+# WPMと問題とスコア
 # ------------------------------
 if st.session_state.finished and st.session_state.input_text and st.session_state.wpm:
+    st.markdown(f"WPM: <b>{round(st.session_state.wpm, 2)}</b>", unsafe_allow_html=True)
+
     if st.session_state.questions is None:
         st.session_state.questions = generate_comprehension_questions(st.session_state.input_text)
 
