@@ -127,12 +127,14 @@ if st.session_state.finished and st.session_state.input_text and st.session_stat
     if st.session_state.questions is None:
         st.session_state.questions = generate_comprehension_questions(st.session_state.input_text)
 
+    # ...（前略）...
+
     st.subheader("内容理解問題")
 
     user_answers = []
     for idx, q in enumerate(st.session_state.questions):
         st.write(f"Q{idx+1}: {q['question']}")
-        ans = st.radio(f"Q{idx+1} の解答", ("True", "False"), key=f"q{idx}")
+        ans = st.radio("", ("True", "False"), key=f"q{idx}")  # ラベルを空に
         user_answers.append(ans)
 
     if st.button("スコアを表示"):
