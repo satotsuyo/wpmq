@@ -70,7 +70,7 @@ if 'questions' not in st.session_state:
 # タイトル表示
 # ------------------------------
 st.markdown("""
-    <h1 style='text-align: center;'>WPMと内容理解スコアアプリ</h1>
+    <h1 style='text-align: center;'>CompRateWPM（Comprehension × WPM）</h1>
 """, unsafe_allow_html=True)
 
 # ------------------------------
@@ -82,6 +82,9 @@ with st.container():
     with col1:
         if not st.session_state.finished:
             st.session_state.input_text = st.text_area("読む英文を入力してください", height=400)
+            st.session_state.input_text = st.text_area("「リーディング開始ボタン」を押して読解スタート", height=400)
+            st.session_state.input_text = st.text_area("「読み終えたので内容理解問題を解く」ボタンを押すと英文に関するTFテストが出題されます", height=400)
+            st.session_state.input_text = st.text_area("「解答を送信してスコアを表示」ボタンを押すとwpmに正答率をかけた数値が表示されます", height=400)
         else:
             st.write("パッセージは非表示です。")
 
